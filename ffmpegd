@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-
-python3 ffmpegd.py "$@"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+python3 "$SCRIPT_DIR"/ffmpegd.py "$@"
 
