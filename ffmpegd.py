@@ -79,7 +79,7 @@ def _get_output(command):
 def _get_args():
     """
     Construct args from sys.argv using argparser. Performs most, but not all, argument validation
-    :return:
+    :return: Tuple of known_args, unknown_args where known args is an argparser namespace and unknown_args is a list of arguments in the form ["--flag", "flag value"]
     """
     parser = argparse.ArgumentParser(description="Batch convert a directory with ffmpeg and any args")
     parser.add_argument("--extension", "-e", help='The file extension for output files', required=True,
@@ -95,22 +95,23 @@ def _get_args():
     parser.add_argument("--dry-run", "-d", help="Emulate the slated action with no changes to the system",
                         action='store_true', required=False)
     parser.add_argument("--regex", help="Regex pattern to match input files", required=False)
-    return parser.parse_known_args()
+    known_args, unknown_args = parser.parse_known_args()
+    if known_args.inputdirectory is None:
+        known_args.inputdirectory = os.getcwd()
+    if known_args.outputdirectory is None:
+        known_args.outputdirectory = known_args.inputdirectory + "[converted]"
+    _validate_known_args(known_args)
+    return known_args, unknown_args
 
 
 def _validate_known_args(known_args):
     """
-    Validate args that cannot cleanly be validated by argparser
+    Validate args that cannot cleanly be validated by argparser. If arguments are not valid, raise an error.
     :param known_args:
     :return:
     """
-    if known_args.inputdirectory is None:
-        known_args.inputdirectory = os.getcwd()
-    success = True
     if not os.path.isdir(known_args.inputdirectory):
-        print(known_args.inputdirectory + "is not a valid directory!")
-        success = False
-    return success
+        raise IsADirectoryError(known_args.inputdirectory + "is not a valid directory!")
 
 
 def _regex_is_desired_file(fullpath, regex_pattern):
@@ -141,46 +142,45 @@ def _extension_is_desired_file(full_path, extension):
         return False
 
 
+# TODO: refactor to use an actual structure
+# TODO: remove mkdir -p from dry run; not strictly accurate, and not emulated well as implementaiton relies on checking
+# if the directory itself exists. should assume any top level directories (set to be created)
+#  that appear in bottom level directories don't exist
 def run(known_args, unknown_args):
-    if _validate_known_args(known_args):
-        dry_run = known_args.dry_run
-        input_directory = known_args.inputdirectory
-        extension = known_args.extension
-        output_directory = known_args.outputdirectory
-        regex_pattern = known_args.regex
-        if output_directory is None:
-            output_directory = input_directory + "-converted"
-        desired_input_paths = []
-        for path, dirs, files in os.walk(input_directory):
-            for f in files:
-                full_path = os.path.join(path, f)
-                if regex_pattern is not None:
-                    is_desired = _regex_is_desired_file(full_path, regex_pattern)
-                else:
-                    is_desired = _extension_is_desired_file(full_path, extension)
-                if is_desired:
-                    desired_input_paths.append(full_path)
-        # reverse order so that deeper paths are called first (fewer calls to makedirs)
-        desired_input_paths = desired_input_paths[::-1]
-        for input_path in desired_input_paths:
-            output_path = input_path.replace(input_directory, output_directory, 1)
-            output_pardir = os.path.dirname(output_path)
-            # Set output_path to have correct file extension
-            output_path = os.path.join(output_pardir,
-                                       os.path.splitext(os.path.basename(output_path))[0] + "." + extension)
-            if not os.path.exists(output_pardir):
-                if dry_run:
-                    print("mkdir -p " + output_pardir)
-                else:
-                    os.makedirs(output_pardir)
-            command = FFMPEG_BASE + ['-i', input_path] + unknown_args + [output_path]
-            if dry_run:
-                whitespace_escaped_command = ["\"" + c + "\"" if " " in c else c for c in command]
-                print(" ".join(whitespace_escaped_command))
+    dry_run = known_args.dry_run
+    input_directory = known_args.inputdirectory
+    extension = known_args.extension
+    output_directory = known_args.outputdirectory
+    regex_pattern = known_args.regex
+    desired_input_paths = []
+    for path, dirs, files in os.walk(input_directory):
+        for f in files:
+            full_path = os.path.join(path, f)
+            if regex_pattern is not None:
+                is_desired = _regex_is_desired_file(full_path, regex_pattern)
             else:
-                _execute_command(command)
-    else:
-        exit(1)
+                is_desired = _extension_is_desired_file(full_path, extension)
+            if is_desired:
+                desired_input_paths.append(full_path)
+    # reverse order so that deeper paths are called first (fewer calls to makedirs)
+    desired_input_paths = desired_input_paths[::-1]
+    for input_path in desired_input_paths:
+        output_path = input_path.replace(input_directory, output_directory, 1)
+        output_pardir = os.path.dirname(output_path)
+        # Set output_path to have correct file extension
+        output_path = os.path.join(output_pardir,
+                                   os.path.splitext(os.path.basename(output_path))[0] + "." + extension)
+        if not os.path.exists(output_pardir):
+            if dry_run:
+                print("mkdir -p " + output_pardir)
+            else:
+                os.makedirs(output_pardir)
+        command = FFMPEG_BASE + ['-i', input_path] + unknown_args + [output_path]
+        if dry_run:
+            whitespace_escaped_command = ["\"" + c + "\"" if " " in c else c for c in command]
+            print(" ".join(whitespace_escaped_command))
+        else:
+            _execute_command(command)
 
 
 def main():
