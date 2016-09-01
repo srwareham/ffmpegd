@@ -99,7 +99,9 @@ def _get_args():
     if known_args.inputdirectory is None:
         known_args.inputdirectory = os.getcwd()
     if known_args.outputdirectory is None:
-        known_args.outputdirectory = known_args.inputdirectory + "[converted]"
+        output_directory_parent = os.path.dirname(known_args.inputdirectory)
+        output_directory_name = os.path.basename(known_args.inputdirectory) + "[converted]"
+        known_args.outputdirectory = os.path.join(output_directory_parent, output_directory_name)
     _validate_known_args(known_args)
     return known_args, unknown_args
 
