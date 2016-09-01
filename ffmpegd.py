@@ -79,7 +79,8 @@ def _get_output(command):
 def _get_args():
     """
     Construct args from sys.argv using argparser. Performs most, but not all, argument validation
-    :return: Tuple of known_args, unknown_args where known args is an argparser namespace and unknown_args is a list of arguments in the form ["--flag", "flag value"]
+    :return: Tuple of known_args, unknown_args where known args is an argparser namespace and unknown_args is a list of
+    arguments in the form ["--flag", "flag value"]
     """
     parser = argparse.ArgumentParser(description="Batch convert a directory with ffmpeg and any args")
     parser.add_argument("--extension", "-e", help='The file extension for output files', required=True,
@@ -98,6 +99,10 @@ def _get_args():
     known_args, unknown_args = parser.parse_known_args()
     if known_args.inputdirectory is None:
         known_args.inputdirectory = os.getcwd()
+    # Remove trailing slash if present. Fixes bug where "[converted]" was the start of a subdirectory instead of
+    # concatenated onto the inputdirectory path.
+    # Note: if bugs arise with the output directory, this is a good place to check
+    known_args.inputdirectory = os.path.normpath(known_args.inputdirectory)
     if known_args.outputdirectory is None:
         output_directory_parent = os.path.dirname(known_args.inputdirectory)
         output_directory_name = os.path.basename(known_args.inputdirectory) + "[converted]"
