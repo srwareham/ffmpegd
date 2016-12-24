@@ -47,8 +47,9 @@ import subprocess
 import re
 
 FFMPEG_BASE = ['ffmpeg']
-VIDEO_EXTENSIONS = ["mp4", "avi", "mov", "mkv", "flv", "wmv", "m4v"]
-AUDIO_EXTENSIONS = ["mp3", "aac", "ogg", "aiff", "flac", "alac"]
+VIDEO_EXTENSIONS = ["mp4", "avi", "mov", "mkv", "flv", "wmv", "m4v", "webm"]
+# Note: ogg *may* be audio-video but usually shouldn't be
+AUDIO_EXTENSIONS = ["mp3", "m4a", "opus", "ape", "wav", "aac", "ogg", "oga", "aiff", "flac", "alac"]
 
 
 def _execute_command(command):
