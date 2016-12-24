@@ -121,22 +121,22 @@ def _validate_known_args(known_args):
         raise IsADirectoryError(known_args.inputdirectory + "is not a valid directory!")
 
 
-def _regex_is_desired_file(fullpath, regex_pattern):
+def _regex_is_desired_file(full_path, regex_pattern):
     """
     Returns True if the basename of a file matches the regex pattern
-    :param fullpath: The path of the input file
+    :param full_path: The path of the input file
     :param regex_pattern: The regular expression pattern to match, as a string
     :return: True if the basename of a file matches the regex pattern, else False
     """
     pattern = re.compile(regex_pattern)
-    basename = os.path.basename(fullpath)
+    basename = os.path.basename(full_path)
     return pattern.match(basename) is not None
 
 
 def _extension_is_desired_file(full_path, extension):
     """
     Returns True if the file ends with the given file extension of a file matches the regex pattern
-    :param fullpath: The path of the input file
+    :param full_path: The path of the input file
     :param extension: The extension to match without a "." e.g., "mkv" or "mp4"
     :return: True if the extension of a file matches the input extension
     """
