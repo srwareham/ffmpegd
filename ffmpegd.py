@@ -87,12 +87,12 @@ def _get_args():
     parser = argparse.ArgumentParser(description="Batch convert a directory with ffmpeg and any args")
     parser.add_argument("--extension", "-e", help='The file extension for output files', required=True,
                         choices=VIDEO_EXTENSIONS + AUDIO_EXTENSIONS)
-    parser.add_argument("--inputdirectory", "-i",
+    parser.add_argument("--input-directory", "-i",
                         help="Input directory to convert. Note, this does not perform shell expansion" +
                              " (i.e., '.'  will not expand to the current working directory)",
                         required=False)
 
-    parser.add_argument("--outputdirectory", "-o",
+    parser.add_argument("--output-directory", "-o",
                         help="Input output directory Note, this does not perform shell expansion" +
                              " (i.e., '.'  will not expand to the current working directory)", required=False)
     parser.add_argument("--dry-run", "-d", help="Emulate the slated action with no changes to the system",
