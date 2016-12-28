@@ -16,7 +16,7 @@ files in the input directory should be converted. E.g. --extension mp4 will resu
 found and converted. --extension mp3 would result in audio files being found and converted.
 
 ffmpegd supports all ffmpeg arguments with two exceptions:
- 1. "-i" whose behavior has been overridden by the --inputdirectory argument
+ 1. "-i" whose behavior has been overridden by the --input-directory argument
  
  2. Commands that require parameters to occur positionally before the "-i" flag used by ffmpeg. These commands generally relate to selecting specific time segments within a file. As these are likely to be relevant on a file-by-file basis, it is unlikely this feature would ever be used in batches. If the demand were to arise, I can put a workaround in place
 
@@ -31,15 +31,15 @@ Examples
 
 .. code-block:: bash
 
-    $ ffmpegd --inputdirectory /path/to/videos/ --extension mp4 -acodec libfdk_aac -vcodec libx264
+    $ ffmpegd --input-directory /path/to/videos/ --extension mp4 -acodec libfdk_aac -vcodec libx264
     All files with file extensions of traditional video files will be located and converted to mp4 videos using the libfdk_aac audio codec and the libx264 video codec. The input directory structure will be replicated at /path/to/videos-converted/ (only directories that contain valid input files will be recreated with output files
     $ ffmpegd -i /path/to/videos/ -e mp4 -acodec libfdk_aac -vcodec libx264
     Same as above
     $ ffmpegd -e mp4 -acodec libfdk_aac -vcodec libx264
     Same as above, except the input directory is defined as the current working directory (i.e., $PWD)
-    $ ffmpegd -e mp4 -acodec libfdk_aac -vcodec libx264 --outputdirectory /output/video/path
+    $ ffmpegd -e mp4 -acodec libfdk_aac -vcodec libx264 --output-directory /output/video/path
     Same as above, except the output directory structure will begin at /output/video/path
-    $ ffmpegd -e mp4 -acodec libfdk_aac -vcodec libx264 --outputdirectory /output/video/path --dry-run
+    $ ffmpegd -e mp4 -acodec libfdk_aac -vcodec libx264 --output-directory /output/video/path --dry-run
     The previous example will be simulated but no conversions will take place and no directory structures will be created
 
 
