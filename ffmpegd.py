@@ -45,6 +45,7 @@ import argparse
 import os
 import subprocess
 import re
+import shutil
 
 FFMPEG_BASE = ['ffmpeg']
 VIDEO_EXTENSIONS = ["mp4", "avi", "mov", "mkv", "flv", "wmv", "m4v", "webm"]
@@ -97,6 +98,7 @@ def _get_args():
     parser.add_argument("--dry-run", "-d", help="Emulate the slated action with no changes to the system",
                         action='store_true', required=False)
     parser.add_argument("--regex", help="Regex pattern to match input files", required=False)
+    parser.add_argument("--copy-others", help="Copy files not slated for conversion", action='store_true', required=False)
     known_args, unknown_args = parser.parse_known_args()
     if known_args.inputdirectory is None:
         known_args.inputdirectory = os.getcwd()
@@ -160,7 +162,9 @@ def run(known_args, unknown_args):
     extension = known_args.extension
     output_directory = known_args.outputdirectory
     regex_pattern = known_args.regex
+    copy_others = known_args.copy_others
     desired_input_paths = []
+    to_copy_input_paths = []
     for path, dirs, files in os.walk(input_directory):
         for f in files:
             full_path = os.path.join(path, f)
@@ -170,6 +174,8 @@ def run(known_args, unknown_args):
                 is_desired = _extension_is_desired_file(full_path, extension)
             if is_desired:
                 desired_input_paths.append(full_path)
+            elif copy_others:
+                to_copy_input_paths.append(full_path)
     # reverse order so that deeper paths are called first (fewer calls to makedirs)
     desired_input_paths = desired_input_paths[::-1]
     for input_path in desired_input_paths:
@@ -189,6 +195,21 @@ def run(known_args, unknown_args):
             print(" ".join(whitespace_escaped_command))
         else:
             _execute_command(command)
+    if to_copy_input_paths:
+        for input_path in to_copy_input_paths:
+            output_path = input_path.replace(input_directory, output_directory, 1)
+            output_pardir = os.path.dirname(output_path)
+            if not os.path.exists(output_pardir):
+                if dry_run:
+                    print("mkdir -p " + output_pardir)
+                else:
+                    os.makedirs(output_pardir)
+            if dry_run:
+                command = ["cp", '-i', input_path] + unknown_args + [output_path]
+                whitespace_escaped_command = ["\"" + c + "\"" if " " in c else c for c in command]
+                print(" ".join(whitespace_escaped_command))
+            else:
+                shutil.copyfile(input_path, output_path)
 
 
 def main():
