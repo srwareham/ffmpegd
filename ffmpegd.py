@@ -100,16 +100,16 @@ def _get_args():
     parser.add_argument("--regex", help="Regex pattern to match input files", required=False)
     parser.add_argument("--copy-others", help="Copy files not slated for conversion", action='store_true', required=False)
     known_args, unknown_args = parser.parse_known_args()
-    if known_args.inputdirectory is None:
-        known_args.inputdirectory = os.getcwd()
+    if known_args.input_directory is None:
+        known_args.input_directory = os.getcwd()
     # Remove trailing slash if present. Fixes bug where "[converted]" was the start of a subdirectory instead of
     # concatenated onto the inputdirectory path.
     # Note: if bugs arise with the output directory, this is a good place to check
-    known_args.inputdirectory = os.path.normpath(known_args.inputdirectory)
-    if known_args.outputdirectory is None:
-        output_directory_parent = os.path.dirname(known_args.inputdirectory)
-        output_directory_name = os.path.basename(known_args.inputdirectory) + "[converted]"
-        known_args.outputdirectory = os.path.join(output_directory_parent, output_directory_name)
+    known_args.input_directory = os.path.normpath(known_args.input_directory)
+    if known_args.output_directory is None:
+        output_directory_parent = os.path.dirname(known_args.input_directory)
+        output_directory_name = os.path.basename(known_args.input_directory) + "[converted]"
+        known_args.output_directory = os.path.join(output_directory_parent, output_directory_name)
     _validate_known_args(known_args)
     return known_args, unknown_args
 
@@ -120,8 +120,8 @@ def _validate_known_args(known_args):
     :param known_args:
     :return:
     """
-    if not os.path.isdir(known_args.inputdirectory):
-        raise IsADirectoryError(known_args.inputdirectory + "is not a valid directory!")
+    if not os.path.isdir(known_args.input_directory):
+        raise IsADirectoryError(known_args.input_directory + "is not a valid directory!")
 
 
 def _regex_is_desired_file(full_path, regex_pattern):
@@ -158,9 +158,9 @@ def _extension_is_desired_file(full_path, extension):
 #  that appear in bottom level directories don't exist
 def run(known_args, unknown_args):
     dry_run = known_args.dry_run
-    input_directory = known_args.inputdirectory
+    input_directory = known_args.input_directory
     extension = known_args.extension
-    output_directory = known_args.outputdirectory
+    output_directory = known_args.output_directory
     regex_pattern = known_args.regex
     copy_others = known_args.copy_others
     desired_input_paths = []
