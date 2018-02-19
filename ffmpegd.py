@@ -99,6 +99,7 @@ def _get_args():
                         action='store_true', required=False)
     parser.add_argument("--regex", help="Regex pattern to match input files", required=False)
     parser.add_argument("--copy-others", help="Copy files not slated for conversion", action='store_true', required=False)
+    parser.add_argument("--two-pass", help="Whether to encode with two passes", action="store_true", required=False)
     known_args, unknown_args = parser.parse_known_args()
     if known_args.input_directory is None:
         known_args.input_directory = os.getcwd()
@@ -163,6 +164,7 @@ def run(known_args, unknown_args):
     output_directory = known_args.output_directory
     regex_pattern = known_args.regex
     copy_others = known_args.copy_others
+    two_pass = known_args.two_pass
     desired_input_paths = []
     to_copy_input_paths = []
     for path, dirs, files in os.walk(input_directory):
@@ -189,12 +191,32 @@ def run(known_args, unknown_args):
                 print("mkdir -p " + output_pardir)
             else:
                 os.makedirs(output_pardir)
-        command = FFMPEG_BASE + ['-i', input_path] + unknown_args + [output_path]
-        if dry_run:
-            whitespace_escaped_command = ["\"" + c + "\"" if " " in c else c for c in command]
-            print(" ".join(whitespace_escaped_command))
+        if not two_pass:
+            command = FFMPEG_BASE + ['-i', input_path] + unknown_args + [output_path]
         else:
-            _execute_command(command)
+            command = FFMPEG_BASE + ['-i', input_path] + ["-pass", "1", "-an"] + unknown_args + ["/dev/null"]
+            command2 = FFMPEG_BASE + ['-i', input_path] + ["-pass", "2", "-lag-in-frames", "25", "-auto-alt-ref", "1"] + unknown_args + [output_path]
+        if dry_run:
+            if not two_pass:
+                whitespace_escaped_command = ["\"" + c + "\"" if " " in c else c for c in command]
+                print(" ".join(whitespace_escaped_command))
+            else:
+                whitespace_escaped_command = ["\"" + c + "\"" if " " in c else c for c in command]
+                whitespace_escaped_command2 = ["\"" + c + "\"" if " " in c else c for c in command]
+                print(" ".join(whitespace_escaped_command))
+                print(" ".join(whitespace_escaped_command2))
+        else:
+            if two_pass:
+                _execute_command(command)
+                _execute_command(command2)
+                try:
+                    # in working directory always (it seems)
+                    temp_file_path = "ffmpeg2pass-0.log"
+                    os.remove(temp_file_path)
+                except OSError:
+                    pass
+            else:
+                _execute_command(command)
     if to_copy_input_paths:
         for input_path in to_copy_input_paths:
             output_path = input_path.replace(input_directory, output_directory, 1)
